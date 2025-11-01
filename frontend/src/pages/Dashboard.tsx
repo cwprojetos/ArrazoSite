@@ -1,49 +1,35 @@
-// src/pages/Dashboard.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { BudgetCard } from "@/components/BudgetCard";
-import { Budget } from "@/types/budget";
 import { toast } from "sonner";
+
+interface Budget {
+  id: string;
+  cliente_nome: string;
+  evento_tipo: string;
+  data_evento: string;
+  local_evento?: string;
+  convidados: number;
+  total: number;
+  observacoes: string;   // corrigido
+  criado_em: string;     // corrigido
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [serverStatus, setServerStatus] = useState("Carregando...");
 
-  // ✅ Buscar orçamentos do backend e mapear para tipo Budget
   const loadBudgets = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orcamento`);
+      const res = await fetch("https://marketingdelivery.online/get-orcamentos.php");
       if (!res.ok) throw new Error("Erro ao buscar orçamentos");
-
-      const dataFromAPI: any[] = await res.json();
-
-      // Mapear campos do backend para tipos do frontend
-      const data: Budget[] = dataFromAPI.map((item) => ({
-        id: item.id.toString(),
-        clientName: item.cliente_nome,
-        eventDate: item.data_evento,
-        eventType: item.evento_tipo,
-        location: item.local_evento,
-        guestCount: item.convidados,
-        services: item.servicos || [], // caso a tabela de serviços venha vazia
-        pricePerPerson: 0,
-        additionalCosts: 0,
-        discount: 0,
-        observations: item.observacoes,
-        total: item.total,
-        createdAt: item.criado_em,
-      }));
-
-      // Ordenar do mais recente para o mais antigo
+      const data: Budget[] = await res.json();
       setBudgets(
-        data.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
+        data.sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
       );
     } catch (err) {
       console.error(err);
@@ -52,10 +38,9 @@ const Dashboard = () => {
     }
   };
 
-  // ✅ Verificar status do backend
   const checkServer = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ping`);
+      const res = await fetch("https://marketingdelivery.online/api/ping.php");
       const data = await res.json();
       setServerStatus(data.message);
     } catch (err) {
@@ -69,14 +54,10 @@ const Dashboard = () => {
     loadBudgets();
   }, []);
 
-  // ✅ Deletar orçamento
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este orçamento?")) return;
-
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orcamento/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`https://marketingdelivery.online/delete-orcamento.php?id=${id}`);
       if (!res.ok) throw new Error("Erro ao excluir orçamento");
       toast.success("Orçamento excluído com sucesso");
       loadBudgets();
@@ -89,33 +70,20 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Logo />
-        </div>
+        <div className="mb-8"><Logo /></div>
 
         <div className="bg-muted p-3 rounded-md mb-6 text-center">
-          <p>
-            <strong>Status do servidor:</strong> {serverStatus}
-          </p>
+          <p><strong>Status do servidor:</strong> {serverStatus}</p>
         </div>
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-display font-bold text-foreground">
-              Meus Orçamentos
-            </h2>
-            <p className="text-muted-foreground mt-1">
-              Gerencie todos os orçamentos criados
-            </p>
+            <h2 className="text-3xl font-display font-bold text-foreground">Meus Orçamentos</h2>
+            <p className="text-muted-foreground mt-1">Gerencie todos os orçamentos criados</p>
           </div>
 
-          <Button
-            size="lg"
-            onClick={() => navigate("/novo-orcamento")}
-            className="shadow-gold"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Novo Orçamento
+          <Button size="lg" onClick={() => navigate("/novo-orcamento")} className="shadow-gold">
+            <Plus className="h-5 w-5 mr-2" /> Novo Orçamento
           </Button>
         </div>
 
@@ -124,25 +92,18 @@ const Dashboard = () => {
             <div className="bg-secondary/50 rounded-full p-6 mb-6">
               <FileText className="h-16 w-16 text-primary" />
             </div>
-            <h3 className="text-2xl font-display font-semibold mb-2">
-              Nenhum orçamento criado
-            </h3>
+            <h3 className="text-2xl font-display font-semibold mb-2">Nenhum orçamento criado</h3>
             <p className="text-muted-foreground mb-6 text-center max-w-md">
               Comece criando seu primeiro orçamento personalizado para seus clientes
             </p>
             <Button size="lg" onClick={() => navigate("/novo-orcamento")}>
-              <Plus className="h-5 w-5 mr-2" />
-              Criar Primeiro Orçamento
+              <Plus className="h-5 w-5 mr-2" /> Criar Primeiro Orçamento
             </Button>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {budgets.map((budget) => (
-              <BudgetCard
-                key={budget.id}
-                budget={budget}
-                onDelete={handleDelete}
-              />
+              <BudgetCard key={budget.id} budget={budget} onDelete={() => handleDelete(budget.id)} />
             ))}
           </div>
         )}

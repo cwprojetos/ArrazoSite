@@ -1,4 +1,3 @@
-// src/pages/NewBudget.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
@@ -18,7 +17,7 @@ const NewBudget = () => {
   const [eventType, setEventType] = useState("casamento");
   const [location, setLocation] = useState("");
   const [guestCount, setGuestCount] = useState(0);
-  const [observations, setObservations] = useState("");
+  const [observations, setObservations] = useState(""); // inicializado corretamente
   const [total, setTotal] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,11 +35,12 @@ const NewBudget = () => {
       local_evento: location,
       convidados: guestCount,
       total,
-      observacoes,
+      observacoes: observations, // agora com valor inicializado
+      criado_em: new Date().toISOString(),
     };
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orcamento`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/add-orcamento.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(budget),
@@ -74,23 +74,12 @@ const NewBudget = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <Label htmlFor="clientName">Nome do Cliente *</Label>
-                <Input
-                  id="clientName"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  required
-                />
+                <Input id="clientName" value={clientName} onChange={(e) => setClientName(e.target.value)} required />
               </div>
 
               <div>
                 <Label htmlFor="eventDate">Data do Evento *</Label>
-                <Input
-                  id="eventDate"
-                  type="date"
-                  value={eventDate}
-                  onChange={(e) => setEventDate(e.target.value)}
-                  required
-                />
+                <Input id="eventDate" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required />
               </div>
 
               <div>
@@ -110,11 +99,7 @@ const NewBudget = () => {
 
               <div>
                 <Label htmlFor="location">Local</Label>
-                <Input
-                  id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
+                <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
               </div>
 
               <div>
@@ -131,12 +116,7 @@ const NewBudget = () => {
 
               <div>
                 <Label htmlFor="observations">Observações</Label>
-                <Textarea
-                  id="observations"
-                  value={observations}
-                  onChange={(e) => setObservations(e.target.value)}
-                  rows={4}
-                />
+                <Textarea id="observations" value={observations} onChange={(e) => setObservations(e.target.value)} rows={4} />
               </div>
 
               <Button type="submit" size="lg" className="w-full mt-4 shadow-gold">
