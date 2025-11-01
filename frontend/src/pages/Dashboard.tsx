@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [serverStatus, setServerStatus] = useState("Carregando...");
 
+  // Carregar orçamentos do backend
   const loadBudgets = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orcamento`);
@@ -30,6 +31,7 @@ const Dashboard = () => {
     }
   };
 
+  // Checar status do servidor
   const checkServer = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ping`);
@@ -46,6 +48,7 @@ const Dashboard = () => {
     loadBudgets();
   }, []);
 
+  // Excluir orçamento
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este orçamento?")) return;
 
@@ -69,6 +72,7 @@ const Dashboard = () => {
           <Logo />
         </div>
 
+        {/* Status do servidor */}
         <div className="bg-muted p-3 rounded-md mb-6 text-center">
           <p>
             <strong>Status do servidor:</strong> {serverStatus}
