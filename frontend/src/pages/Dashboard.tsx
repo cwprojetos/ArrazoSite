@@ -11,14 +11,27 @@ import { toast } from "sonner";
 const Dashboard = () => {
   const navigate = useNavigate();
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [serverStatus, setServerStatus] = useState("Carregando...");
 
   useEffect(() => {
+    // carregar orçamentos
     loadBudgets();
+
+    // testar conexão com backend
+    fetch("/api/ping")
+      .then((res) => res.json())
+      .then((data) => setServerStatus(data.message))
+      .catch(() => setServerStatus("Erro ao conectar ❌"));
   }, []);
 
   const loadBudgets = () => {
     const data = getBudgets();
-    setBudgets(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    setBudgets(
+      data.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+    );
   };
 
   const handleDelete = (id: string) => {
@@ -36,6 +49,13 @@ const Dashboard = () => {
           <Logo />
         </div>
 
+        {/* Status do servidor */}
+        <div className="bg-muted p-3 rounded-md mb-6 text-center">
+          <p>
+            <strong>Status do servidor:</strong> {serverStatus}
+          </p>
+        </div>
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-3xl font-display font-bold text-foreground">
@@ -45,7 +65,7 @@ const Dashboard = () => {
               Gerencie todos os orçamentos criados
             </p>
           </div>
-          
+
           <Button
             size="lg"
             onClick={() => navigate("/novo-orcamento")}
@@ -65,7 +85,8 @@ const Dashboard = () => {
               Nenhum orçamento criado
             </h3>
             <p className="text-muted-foreground mb-6 text-center max-w-md">
-              Comece criando seu primeiro orçamento personalizado para seus clientes
+              Comece criando seu primeiro orçamento personalizado para seus
+              clientes
             </p>
             <Button size="lg" onClick={() => navigate("/novo-orcamento")}>
               <Plus className="h-5 w-5 mr-2" />
