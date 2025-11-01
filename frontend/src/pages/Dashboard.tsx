@@ -1,3 +1,4 @@
+// src/pages/Dashboard.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, FileText } from "lucide-react";
@@ -12,12 +13,32 @@ const Dashboard = () => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [serverStatus, setServerStatus] = useState("Carregando...");
 
-  // Carregar orçamentos do backend
+  // ✅ Buscar orçamentos do backend e mapear para tipo Budget
   const loadBudgets = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orcamento`);
       if (!res.ok) throw new Error("Erro ao buscar orçamentos");
-      const data: Budget[] = await res.json();
+
+      const dataFromAPI: any[] = await res.json();
+
+      // Mapear campos do backend para tipos do frontend
+      const data: Budget[] = dataFromAPI.map((item) => ({
+        id: item.id.toString(),
+        clientName: item.cliente_nome,
+        eventDate: item.data_evento,
+        eventType: item.evento_tipo,
+        location: item.local_evento,
+        guestCount: item.convidados,
+        services: item.servicos || [], // caso a tabela de serviços venha vazia
+        pricePerPerson: 0,
+        additionalCosts: 0,
+        discount: 0,
+        observations: item.observacoes,
+        total: item.total,
+        createdAt: item.criado_em,
+      }));
+
+      // Ordenar do mais recente para o mais antigo
       setBudgets(
         data.sort(
           (a, b) =>
@@ -31,7 +52,7 @@ const Dashboard = () => {
     }
   };
 
-  // Checar status do servidor
+  // ✅ Verificar status do backend
   const checkServer = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ping`);
@@ -48,7 +69,7 @@ const Dashboard = () => {
     loadBudgets();
   }, []);
 
-  // Excluir orçamento
+  // ✅ Deletar orçamento
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este orçamento?")) return;
 
@@ -72,7 +93,6 @@ const Dashboard = () => {
           <Logo />
         </div>
 
-        {/* Status do servidor */}
         <div className="bg-muted p-3 rounded-md mb-6 text-center">
           <p>
             <strong>Status do servidor:</strong> {serverStatus}
