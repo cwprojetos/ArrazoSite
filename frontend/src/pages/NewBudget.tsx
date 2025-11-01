@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save } from "lucide-react";
+import { Plus, Save, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/Logo";
 import { Budget, EventType, BudgetService } from "@/types/budget";
@@ -63,14 +69,17 @@ const NewBudget = () => {
   const [discount, setDiscount] = useState<number>(0);
   const [observations, setObservations] = useState("");
 
-  // ✅ Calcular total: valor × convidados
-  const total = services
-    .filter((s) => s.selected)
-    .reduce((acc, s) => acc + (Number(s.value) || 0) * guestCount, 0) * ((100 - discount) / 100);
+  const total =
+    services
+      .filter((s) => s.selected)
+      .reduce((acc, s) => acc + (Number(s.value) || 0) * guestCount, 0) *
+    ((100 - discount) / 100);
 
   const handleServiceToggle = (serviceId: string) => {
     setServices((prev) =>
-      prev.map((s) => (s.id === serviceId ? { ...s, selected: !s.selected } : s))
+      prev.map((s) =>
+        s.id === serviceId ? { ...s, selected: !s.selected } : s
+      )
     );
   };
 
@@ -83,8 +92,8 @@ const NewBudget = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!clientName || !eventDate) {
-      toast.error("Preencha os campos obrigatórios");
+    if (!clientName || !eventDate || guestCount <= 0) {
+      toast.error("Preencha todos os campos obrigatórios!");
       return;
     }
 
@@ -125,7 +134,7 @@ const NewBudget = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* CLIENTE */}
+              {/* Cliente */}
               <div>
                 <h3 className="text-xl font-display font-semibold">Dados do Cliente</h3>
                 <Label htmlFor="clientName">Nome do Cliente *</Label>
@@ -138,7 +147,7 @@ const NewBudget = () => {
                 />
               </div>
 
-              {/* EVENTO */}
+              {/* Evento */}
               <div>
                 <h3 className="text-xl font-display font-semibold mt-4">Dados do Evento</h3>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -152,7 +161,6 @@ const NewBudget = () => {
                       required
                     />
                   </div>
-
                   <div>
                     <Label htmlFor="eventType">Tipo de Evento *</Label>
                     <Select value={eventType} onValueChange={(v) => setEventType(v as EventType)}>
@@ -167,7 +175,6 @@ const NewBudget = () => {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div>
                     <Label htmlFor="location">Local (opcional)</Label>
                     <Input
@@ -177,13 +184,12 @@ const NewBudget = () => {
                       placeholder="Local do evento"
                     />
                   </div>
-
                   <div>
                     <Label htmlFor="guestCount">Número de Convidados *</Label>
                     <Input
                       id="guestCount"
                       type="number"
-                      min="0"
+                      min={1}
                       value={guestCount || ""}
                       onChange={(e) => setGuestCount(Number(e.target.value))}
                       placeholder="0"
@@ -193,39 +199,34 @@ const NewBudget = () => {
                 </div>
               </div>
 
-              {/* SERVIÇOS */}
+              {/* Serviços */}
               <div>
                 <h3 className="text-xl font-display font-semibold">Serviços</h3>
                 <div className="grid md:grid-cols-2 gap-6 mt-4">
-                  {services.map((service) => (
+                  {services.map((s) => (
                     <div
-                      key={service.id}
+                      key={s.id}
                       className={`border rounded-xl shadow-sm overflow-hidden transition-all ${
-                        service.selected ? "border-primary ring-1 ring-primary" : "border-gray-200"
+                        s.selected ? "border-primary ring-1 ring-primary" : "border-gray-200"
                       }`}
                     >
-                      <img
-                        src={service.image}
-                        alt={service.name}
-                        className="w-full h-40 object-cover"
-                      />
+                      <img src={s.image} alt={s.name} className="w-full h-40 object-cover" />
                       <div className="p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold text-lg">{service.name}</h4>
+                          <h4 className="font-semibold text-lg">{s.name}</h4>
                           <Checkbox
-                            checked={service.selected}
-                            onCheckedChange={() => handleServiceToggle(service.id)}
+                            checked={s.selected}
+                            onCheckedChange={() => handleServiceToggle(s.id)}
                           />
                         </div>
-                        <p className="text-sm text-muted-foreground mb-3">{service.description}</p>
-
+                        <p className="text-sm text-muted-foreground mb-3">{s.description}</p>
                         <Label>Valor por pessoa (R$)</Label>
                         <Input
                           type="number"
-                          step="0.01"
-                          value={service.value || ""}
+                          step={0.01}
+                          value={s.value || ""}
                           onChange={(e) =>
-                            handleServiceValueChange(service.id, Number(e.target.value))
+                            handleServiceValueChange(s.id, Number(e.target.value))
                           }
                           placeholder="Digite o valor por pessoa"
                         />
@@ -235,31 +236,29 @@ const NewBudget = () => {
                 </div>
               </div>
 
-              {/* DESCONTO */}
+              {/* Desconto */}
               <div>
                 <Label htmlFor="discount">Desconto (%)</Label>
                 <Input
                   id="discount"
                   type="number"
-                  min="0"
-                  max="100"
+                  min={0}
+                  max={100}
                   value={discount || ""}
                   onChange={(e) => setDiscount(Number(e.target.value))}
                   placeholder="0"
                 />
               </div>
 
-              {/* TOTAL */}
-              <div className="bg-secondary p-6 rounded-lg mt-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold">Total:</span>
-                  <span className="text-3xl font-display font-bold text-primary">
-                    R$ {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
+              {/* Total */}
+              <div className="bg-secondary p-6 rounded-lg mt-6 flex justify-between">
+                <span className="text-lg font-semibold">Total:</span>
+                <span className="text-3xl font-display font-bold text-primary">
+                  R$ {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </span>
               </div>
 
-              {/* OBSERVAÇÕES */}
+              {/* Observações */}
               <div>
                 <Label htmlFor="observations">Observações</Label>
                 <Textarea
@@ -271,7 +270,7 @@ const NewBudget = () => {
                 />
               </div>
 
-              {/* SALVAR */}
+              {/* Salvar */}
               <Button type="submit" size="lg" className="w-full mt-4 shadow-gold">
                 <Save className="h-5 w-5 mr-2" /> Salvar Orçamento
               </Button>

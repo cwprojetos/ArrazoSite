@@ -4,7 +4,6 @@ import { Plus, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { BudgetCard } from "@/components/BudgetCard";
-import { getBudgets, deleteBudget } from "@/lib/storage";
 import { Budget } from "@/types/budget";
 import { toast } from "sonner";
 
@@ -13,32 +12,53 @@ const Dashboard = () => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [serverStatus, setServerStatus] = useState("Carregando...");
 
-  useEffect(() => {
-    // carregar orçamentos
-    loadBudgets();
-
-    // testar conexão com backend usando VITE_API_URL
-    fetch(`${import.meta.env.VITE_API_URL}/api/ping`)
-      .then((res) => res.json())
-      .then((data) => setServerStatus(data.message))
-      .catch(() => setServerStatus("Erro ao conectar ❌"));
-  }, []);
-
-  const loadBudgets = () => {
-    const data = getBudgets();
-    setBudgets(
-      data.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-    );
+  const loadBudgets = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orcamento`);
+      if (!res.ok) throw new Error("Erro ao buscar orçamentos");
+      const data: Budget[] = await res.json();
+      setBudgets(
+        data.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível carregar os orçamentos");
+      setBudgets([]);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este orçamento?")) {
-      deleteBudget(id);
-      loadBudgets();
+  const checkServer = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/ping`);
+      const data = await res.json();
+      setServerStatus(data.message);
+    } catch (err) {
+      console.error(err);
+      setServerStatus("Erro ao conectar ❌");
+    }
+  };
+
+  useEffect(() => {
+    checkServer();
+    loadBudgets();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este orçamento?")) return;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/orcamento/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Erro ao excluir orçamento");
       toast.success("Orçamento excluído com sucesso");
+      loadBudgets();
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível excluir o orçamento");
     }
   };
 
@@ -49,7 +69,6 @@ const Dashboard = () => {
           <Logo />
         </div>
 
-        {/* Status do servidor */}
         <div className="bg-muted p-3 rounded-md mb-6 text-center">
           <p>
             <strong>Status do servidor:</strong> {serverStatus}
@@ -85,8 +104,7 @@ const Dashboard = () => {
               Nenhum orçamento criado
             </h3>
             <p className="text-muted-foreground mb-6 text-center max-w-md">
-              Comece criando seu primeiro orçamento personalizado para seus
-              clientes
+              Comece criando seu primeiro orçamento personalizado para seus clientes
             </p>
             <Button size="lg" onClick={() => navigate("/novo-orcamento")}>
               <Plus className="h-5 w-5 mr-2" />
