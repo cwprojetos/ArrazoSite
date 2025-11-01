@@ -17,8 +17,8 @@ const Dashboard = () => {
     // carregar orçamentos
     loadBudgets();
 
-    // testar conexão com backend
-    fetch("/api/ping")
+    // testar conexão com backend usando VITE_API_URL
+    fetch(`${import.meta.env.VITE_API_URL}/api/ping`)
       .then((res) => res.json())
       .then((data) => setServerStatus(data.message))
       .catch(() => setServerStatus("Erro ao conectar ❌"));
